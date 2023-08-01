@@ -1,0 +1,38 @@
+[
+  {
+   "name": "Mastercam",
+   "defaultOn": 0
+  },
+  {
+   "name": "Setup Sheets",
+   "defaultOn": 1
+  },
+  {
+   "name": "Check Sheets",
+   "defaultOn": 1
+  },
+  {
+   "name": "Fixtures",
+   "defaultOn": 1
+  },
+  {
+   "name": "STL Files",
+   "defaultOn": 1
+  },
+  {
+   "name": "Powermill",
+   "defaultOn": 0
+  },
+  {
+   "name": "CAMplete",
+   "defaultOn": 0
+  },
+  {
+   "name": "Solid Works",
+   "defaultOn": 1
+  },
+  {
+   "name": "Obsolete",
+   "defaultOn": 0
+  }
+]

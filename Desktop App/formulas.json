@@ -1,0 +1,90 @@
+[
+  {
+   "name": "T.P. from Error",
+   "round": 5,
+   "questions": [
+    "X Error",
+    "Y Error"
+   ],
+   "formula": "math.sqrt(([0]**2)+([1]**2)) * 2"
+  },
+  {
+   "name": "T.P. from Pos.",
+   "round": 5,
+   "questions": [
+    "X Nom Pos.",
+    "X Act Pos.",
+    "Y Nom Pos.",
+    "Y Act Pos."
+   ],
+   "formula": "math.sqrt((([0]-[1])**2)+(([2]-[3])**2)) * 2"
+  },
+  {
+   "name": "SFM",
+   "round": 4,
+   "questions": [
+    "Tool Diameter",
+    "RPM"
+   ],
+   "formula": ".262*[0]*[1]"
+  },
+  {
+   "name": "RPM",
+   "round": 1,
+   "questions": [
+    "SFM",
+    "Diameter"
+   ],
+   "formula": "3.82*[0]/[1]"
+  },
+  {
+   "name": "IPM",
+   "round": 4,
+   "questions": [
+    "Chip load per Tooth",
+    "# of Teeth",
+    "RPM"
+   ],
+   "formula": "[0]*[1]*[2]"
+  },
+  {
+   "name": "FEED",
+   "round": 2,
+   "questions": [
+    "RPM",
+    "# of Teeth",
+    "Feed per Tooth"
+   ],
+   "formula": "[0]*[1]*[2]"
+  },
+  {
+   "name": "MRR",
+   "round": 1,
+   "questions": [
+    "ADOC",
+    "RDOC",
+    "Feed"
+   ],
+   "formula": "[0]*[1]*[2]"
+  },
+  {
+   "name": "ID Radius Feed",
+   "round": 2,
+   "questions": [
+    "Feed",
+    "Tool Dia",
+    "Hole Dia"
+   ],
+   "formula": "(([2]-[1])/[2])*[0]"
+  },
+  {
+   "name": "OD Radius Feed",
+   "round": 2,
+   "questions": [
+    "Feed",
+    "Tool Dia",
+    "Hole Dia"
+   ],
+   "formula": "(([2]+[1])/[2])*[0]"
+  }
+]

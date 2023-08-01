@@ -1,0 +1,236 @@
+[
+  {
+    "_comment": "------------------------- 0-80 -------------------------",
+    "size": "0-80",
+    "minor diameter": {
+      "low": 0.0465,
+      "high": 0.0514
+    },
+   "major diameter": 0.060,
+   "threads per inch": 80,
+   "cutting tap": {
+      "diameter": 0.0469,
+      "size": "3/64"
+    },
+   "roll tap": {
+      "diameter": 0.055,
+      "size": "#54"
+    }
+  },
+  {
+   "_comment": "------------------------- 2-56 -------------------------",
+   "size": "2-56",
+   "minor diameter": {
+      "low": 0.0667,
+      "high": 0.0737
+    },
+   "major diameter": 0.086,
+   "threads per inch": 56,
+   "cutting tap":{
+	"diameter":0.070,
+	"size": "#50"
+   },
+   "roll tap": {
+      "diameter": 0.0781,
+      "size": "5/64"
+    }
+  },
+  {
+   "_comment": "------------------------- 2-56 STI -------------------------",
+   "size": "2-56 STI",
+   "minor diameter": {
+      "low": 0.090,
+      "high": 0.0961
+    },
+   "major diameter": 0.090,
+   "threads per inch": 56,
+   "cutting tap":{
+	"diameter": 0.09375,
+	"size": "3/32"
+   },
+   "roll tap": {
+      "diameter": 0,
+      "size": ""
+    }
+  },
+  {
+   "_comment": "------------------------- 3 - 48 -------------------------",
+   "size": "3-48",
+   "minor diameter": {
+      "low": 0.0764,
+      "high": 0.0845
+    },
+   "major diameter": 0.102,
+   "threads per inch": 48,
+   "cutting tap":{
+	"diameter": 0.0785,
+	"size": "#47"
+   },
+   "roll tap": {
+      "diameter": 0.089,
+      "size": "#43"
+    }
+  },
+  {
+   "_comment": "------------------------- 4-40 -------------------------",
+   "size": "4-40",
+   "minor diameter": {
+      "low": 0.0849,
+      "high": 0.0939
+    },
+   "major diameter": 0.112,
+   "threads per inch": 40,
+   "cutting tap":{
+	"diameter": 0.089,
+	"size": "#43"
+   },
+   "roll tap": {
+      "diameter": 0.0995,
+      "size": "#39"
+    }
+  },
+  {
+   "_comment": "------------------------- 4-40 STI -------------------------",
+   "size": "4-40 STI",
+   "minor diameter": {
+      "low": 0.1175,
+      "high": 0.1252
+    },
+   "major diameter": 0.112,
+   "threads per inch": 40,
+   "cutting tap":{
+	"diameter": 0.120,
+	"size": "#31"
+   },
+   "roll tap": {
+      "diameter": 0,
+      "size": ""
+    }
+  },
+  {
+   "_comment": "------------------------- 6-32 -------------------------",
+   "size": "6-32",
+   "minor diameter": {
+      "low": 0.104,
+      "high": 0.114
+    },
+   "major diameter": 0.138,
+   "threads per inch": 32,
+   "cutting tap":{
+	"diameter": 0.1065,
+	"size": "#36"
+   },
+   "roll tap": {
+      "diameter": 0.125,
+      "size": "1/8"
+    }
+  },
+  {
+   "_comment": "------------------------- 8-32 -------------------------",
+   "size": "8-32",
+   "minor diameter": {
+      "low": 0.130,
+      "high": 0.139
+    },
+   "major diameter": 0.164,
+   "threads per inch": 32,
+   "cutting tap":{
+	"diameter": 0.136,
+	"size": "#29"
+   },
+   "roll tap": {
+      "diameter": 0.1495,
+      "size": "#25"
+    }
+  },
+  {
+   "_comment": "------------------------- 10-32 -------------------------",
+   "size": "10-32",
+   "minor diameter": {
+      "low": 0.156,
+      "high": 0.164
+    },
+   "major diameter": 0.190,
+   "threads per inch": 32,
+   "cutting tap":{
+	"diameter": 0.159,
+	"size": "#21"
+   },
+   "roll tap": {
+      "diameter": 0.177,
+      "size": "#16"
+    }
+  },
+  {
+   "_comment": "------------------------- 1/4-20 -------------------------",
+   "size": "1/4-20",
+   "minor diameter": {
+      "low": 0.196,
+      "high": 0.207
+    },
+   "major diameter": 0.250,
+   "threads per inch": 20,
+   "cutting tap":{
+	"diameter": 0.201,
+	"size": "#7"
+   },
+   "roll tap": {
+      "diameter": 0.228,
+      "size": "#1"
+    }
+  },
+  {
+   "_comment": "------------------------- M4x.7 -------------------------",
+   "size": "M4x0.7",
+   "minor diameter": {
+      "low": 0.1276,
+      "high": 0.1347
+    },
+   "major diameter": 0.1575,
+   "threads per inch": 36.29,
+   "cutting tap":{
+	"diameter": 0.1299,
+	"size": "3.3MM"
+   },
+   "roll tap": {
+      "diameter": 0,
+      "size": ""
+    }
+  },
+  {
+   "_comment": "------------------------- M6x1.0 -------------------------",
+   "size": "M6x1.0",
+   "minor diameter": {
+      "low": 0.1936,
+      "high": 0.2028
+    },
+   "major diameter": 0.2362,
+   "threads per inch": 25.4,
+   "cutting tap":{
+	"diameter": 0.1969,
+	"size": "5MM"
+   },
+   "roll tap": {
+      "diameter": 0,
+      "size": ""
+    }
+  },
+  {
+   "_comment": "------------------------- M8x1.25 -------------------------",
+   "size": "M8x1.25",
+   "minor diameter": {
+      "low": 0.2617,
+      "high": 0.2721
+    },
+   "major diameter": 0.3149,
+   "threads per inch": 20.32,
+   "cutting tap":{
+	"diameter": 0.2657,
+	"size": "6.75MM"
+   },
+   "roll tap": {
+      "diameter": 0,
+      "size": ""
+    }
+  }
+]

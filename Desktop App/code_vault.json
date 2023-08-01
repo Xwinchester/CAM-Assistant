@@ -1,0 +1,65 @@
+[
+  {
+   "name": "FEELER HV800",
+   "data": [
+    {
+     "code": "M07",
+     "description": "FLR 1 & FLR 2 Air Blast"
+    },
+    {
+     "code": "M27",
+     "description": "FLR 3 Air Blast"
+    }
+   ]
+  },
+  {
+   "name": "MATSUURA SMC-630",
+   "data": [
+    {
+     "code": "G130",
+     "description": "Cancel Contour Control"
+    },
+    {
+     "code": "G131R",
+     "description": "2D Contour Control, Range 1=Low, 10=Highest"
+    },
+    {
+     "code": "M50",
+     "description": "Thru Spindle Coolant"
+    },
+    {
+     "code": "M52",
+     "description": "Thru Spindle Air(On)"
+    },
+    {
+     "code": "M53",
+     "description": "Thru Spindle Air(Off)"
+    }
+   ]
+  },
+  {
+   "name": "MATSUURA MX-520",
+   "data": [
+    {
+     "code": "G130",
+     "description": "Cancel Contour Control"
+    },
+    {
+     "code": "G131R",
+     "description": "2D Contour Control (1=Low, 10=Highest)"
+    },
+    {
+     "code": "G131F",
+     "description": "Multiaxis Contour Control (1=Low, 3=Highest)"
+    },
+    {
+     "code": "M50",
+     "description": "Thru Spindle Coolant"
+    },
+    {
+     "code": "M27",
+     "description": "Air Blast"
+    }
+   ]
+  }
+]
