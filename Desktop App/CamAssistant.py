@@ -25,7 +25,9 @@ class ColorScheme(Enum):
     "logo_frame_background": "#141417",
     'logo_frame_font': 'gray',
     "button_background": "gray",
-    "button_font": "black"
+    "button_font": "black",
+    "message_background":"gray",
+    "message_font":"black"
   }
   LIGHT = {
     'data_frame_background': "white",
@@ -40,7 +42,9 @@ class ColorScheme(Enum):
     "logo_frame_background": "gray",
     'logo_frame_font': 'black',
     "button_background": "light gray",
-    "button_font": "black"
+    "button_font": "black",
+    "message_background":"light gray",
+    "message_font":"black"
   }
 
 class ThreadExpert:
@@ -592,7 +596,7 @@ class CodeVault:
     # attach the Treeview to the scrollbar
     scrollbar.config(command=self.tree.yview)
 
-    self.tree.pack(padx=5, pady=5)
+    self.tree.pack(padx=20, pady=20, fill="both", expand=True)
 
     # place the scrollbar next to the Treeview
     scrollbar.place(relx=1.0, rely=0, relheight=1, relwidth=0.02)
@@ -610,7 +614,7 @@ class CodeVault:
     self.treeview_sort_column("code", False)
 
     # Define the tag for even rows
-    self.tree.tag_configure("even", background="gray")
+    self.tree.tag_configure("even", background="light gray")
     self.tree.tag_configure("odd", background="white")
 
     # Apply the tag to the appropriate rows
@@ -627,135 +631,15 @@ class CodeVault:
     for index, (val, k) in enumerate(l):
       self.tree.move(k, '', index)
 
-class RotationMacro:
+class ProbeBuilder:
 
-  QUESTIONS = []
-  ANSWER = None
-  CURRENT_FORMULA = None
-  ROUNDING = 4
 
   def __init__(self, frame, title, json_file, app):
-    self.MACHINE_DATA = [formula for formula in json_file]
+      self.DATA_FRAME = frame
+      self.APP = app
+      Label(self.DATA_FRAME, text=title, font=(None, 30)).pack()
 
-    self.DATA_FRAME = frame
-    self.APP = app
-    Label(self.DATA_FRAME, text=title, font=(None, 30)).pack()
 
-    # set machine label
-    Label(self.DATA_FRAME, text=f"Select Machine", font=(None, 16)).pack()
-
-    # Create a StringVar to hold the selected machine
-    self.selected_machine_var = StringVar(self.DATA_FRAME)
-    self.selected_machine_var.set(self.MACHINE_DATA[0]["name"])
-
-    self.thread_menu = OptionMenu(
-      self.DATA_FRAME, self.selected_machine_var,
-      *[name["name"] for name in self.MACHINE_DATA])
-    self.thread_menu.config(font=(None, 15))
-    self.thread_menu['menu'].config(font=('Courier', 15))
-    self.thread_menu.pack(anchor="n")
-
-    # Create a new LabelFrame
-    self.question_frame = LabelFrame(self.DATA_FRAME, text="", font=(None, 18))
-    self.question_frame.pack(padx=10, pady=10)
-
-    # setup labels for boxes
-    Label(self.question_frame,
-          text="WCS",
-          font=(None, 15),
-          bg=self.APP.COLOR_SCHEME.value['data_frame_background'],
-          fg=self.APP.COLOR_SCHEME.value['data_frame_font']).grid(row=0,
-                                                                  column=1)
-    Label(self.question_frame,
-          text="New WCS",
-          font=(None, 15),
-          bg=self.APP.COLOR_SCHEME.value['data_frame_background'],
-          fg=self.APP.COLOR_SCHEME.value['data_frame_font']).grid(row=0,
-                                                                  column=2)
-    # setup entry boxes for answers
-    self.ENTRY_BOXES = [{
-      'name': "X Location", 'tag':'x pos'
-    }, {
-      'name': "Y Location", 'tag':'y pos'
-    }, {
-      'name': "Z Location", 'tag':'z pos'
-    }, {
-      'name': "Input Angle", 'tag':''
-    }]
-    for index, entry in enumerate(self.ENTRY_BOXES, 1):
-      # setup labels
-      entry['label'] = Label(self.question_frame,
-                             text=entry['name'] + ":",
-                             font=(None, 15))
-      entry['label'].config(
-        bg=self.APP.COLOR_SCHEME.value['data_frame_background'],
-        fg=self.APP.COLOR_SCHEME.value['data_frame_font'])
-      entry['label'].grid(padx=5, pady=5, row=index, column=0)
-      # setup current wcs
-      entry['wcs_var'] = StringVar(self.question_frame)
-      #entry['wcs_var'].set('0')
-      entry['wcs_entry'] = Entry(self.question_frame,
-                                 textvariable=entry['wcs_var'],
-                                 font=(None, 15))
-      entry['wcs_entry'].bind("<FocusOut>", self.__solve_angle)
-      entry['wcs_entry'].grid(padx=5, pady=5, row=index, column=1)
-      # setup new positions
-      entry['new_var'] = StringVar(self.question_frame)
-      entry['new_var'].set('0')
-      entry['new_entry'] = Entry(self.question_frame,
-                                 textvariable=entry['new_var'],
-                                 font=(None, 15))
-      entry['new_entry'].bind("<FocusOut>", self.__solve_angle)
-      entry['new_entry'].grid(padx=5, pady=5, row=index, column=2)
-
-    # Create a trace to keep track of the option selected
-    self.selected_machine_var.trace ("w", self.__solve_angle)
-
-    self.__solve_angle ()
-
-  def __solve_angle(self, *args):
-    machine = next(
-      (machine for machine in self.MACHINE_DATA if machine["name"] == self.selected_machine_var.get()), None)
-
-    centerline = (machine['x pos'], machine['y pos'], machine['z pos'])
-
-    try:
-      userAngle = float(self.ENTRY_BOXES[-1]['new_entry'].get())
-      position = [float(self.ENTRY_BOXES[0]['wcs_entry'].get()), float(self.ENTRY_BOXES[1]['wcs_entry'].get()),
-                  float(self.ENTRY_BOXES[2]['wcs_entry'].get())]
-      outputData = self.__calculate_position(position, centerline, userAngle)
-    except:
-      outputData = [m for m in machine]
-
-    # sets the boxes if they have a tag
-    for index, entry in enumerate(self.ENTRY_BOXES):
-        if entry['tag'] != '':
-          if entry['wcs_entry'].get() =="":
-            self.__set_entry(entry['wcs_entry'], machine[entry['tag']], toLock=False)
-          self.__set_entry(entry['new_entry'],outputData[index] )
-
-  def __set_entry(self, entry, input, toLock=True):
-    entry.config(state='normal')
-    entry.delete(0, END)
-    entry.insert(0, input)
-    if toLock:
-      entry.config(state='readonly')
-
-  def __calculate_position(self,point, center, angle_y):
-    # Convert angle to radians
-    angle_y = -math.radians(angle_y)
-    # Define rotation matrix around y axis
-    R = [[math.cos(angle_y), 0, math.sin(angle_y)],
-         [0, 1, 0],
-         [-math.sin(angle_y), 0, math.cos(angle_y)]]
-    # Subtract center from point
-    point = [point[i] - center[i] for i in range(3)]
-    # Apply rotation matrix
-    point = [sum(R[i][j] * point[j] for j in range(3)) for i in range(3)]
-    # Add center back to point
-    point = [round(point[i] + center[i], self.ROUNDING) for i in range(3)]
-    # Return rotated point
-    return point
 
 class JsonFileManager:
     def __init__(self):
@@ -784,14 +668,6 @@ class JsonFileManager:
     def get_data(self, file_path):
         return self.data.get(file_path)
 
-class Apps(Enum):
-    HOME = "home"
-    THREADEXPERT = "thread expert"
-    FORMULAWIZARD = "formula wizard"
-    FOLDERFACTORY = "folder factory"
-    CODEVAULT = "code vault"
-    JSONEDITOR  = "json editor"
-    MESSAGECENTER = "message center"
 
 class JsonEditor:
 
@@ -810,8 +686,6 @@ class JsonEditor:
     # create text area
     self.textarea = Text (self.DATA_FRAME, wrap="word")
     self.textarea.pack (padx=8, pady=8, fill="both", expand=True)
-
-
 
     self.update_textarea()
 
@@ -859,8 +733,10 @@ class MessageCenter:
     self.SERVER ="smtp.office365.com"
     self.PORT = 587
 
-    # email settings
-    self.EMAIL = {"email":"CamAssistantAutomation@outlook.com", "password":"Password2444", "recipients":["WinchesterAutomation@outlook.com"]} 
+    # email settings - junk email only for this, dont bother stealing my password 
+    self.EMAIL = {"email":"moc.kooltuo@noitamotuAtnatsissamac",
+                  "password":"4442drowssap",
+                  "recipients":["moc.kooltuo@noitamotuaretsehcniw"]} 
 
     # app settings
     self.DATA_FRAME = frame
@@ -869,7 +745,7 @@ class MessageCenter:
 
     #Label (self.DATA_FRAME, text=message, font=(None, 12)).pack (pady=5)
     # add save button to save json data
-    self.send_button = Button (self.DATA_FRAME, text="Send Email", font=(None, 14), command=self.__send_message)
+    self.send_button = Button (self.DATA_FRAME, text="Send Message", font=(None, 14), command=self.__send_message)
     self.send_button.pack (pady=5)
 
     # create text area
@@ -895,7 +771,7 @@ class MessageCenter:
     self.textarea.delete("1.0", END)
 
   def insert_text(self, text):
-    #self.reset_text_area()
+    self.reset_text_area()
     self.textarea.insert(END, text)
 
   def __send_message(self):
@@ -906,21 +782,31 @@ class MessageCenter:
       self.alter_send_button_test("Sending Message")
       try:          
           # Set up the email message
-          subject = f"Cam Assistant Automated Message from {os.getlogin()}"
+
+          # get recipients
+          recipients = []
+          for mail in self.EMAIL['recipients']:
+            recipients.append(mail[::-1].title())
+            
+          subject = f"CAM Assistant Automated Message from {os.getlogin()}"
 
           today = datetime.now()
           body_header = f"from {os.getlogin()} on {today.month}/{today.day}/{today.year}\n"
           # creates the email message
-          email_message = f"From: {os.getlogin()}\nTo: {', '.join(self.EMAIL['recipients'])}\nSubject: {subject}\n\n\nSender:\n{body_header}\nMessage:\n{body}"
+          email_message = f"From: {os.getlogin()}\nTo: {', '.join(recipients)}\nSubject: {subject}\n\n\nSender:\n{body_header}\nMessage:\n{body}"
+
+
+          
           # Start the SMTP server and login
           with smtplib.SMTP(self.SERVER, self.PORT) as server:
               server.starttls()
-              server.login(self.EMAIL['email'], self.EMAIL['password'])
+              server.login(self.EMAIL['email'][::-1].title(), self.EMAIL['password'][::-1].title())
 
               # Send the email
-              server.sendmail(self.EMAIL['email'], self.EMAIL['recipients'], email_message)
+              server.sendmail(self.EMAIL['email'][::-1].title(), recipients, email_message)
           self.alter_send_button_test("Send Message")
           messagebox.showinfo("Email Sent", "Message sent, Thank you for your feed back.")
+          self.reset_text_area()
       except Exception as e:
           messagebox.showerror(f"Error", f"Failed to send email.\n{e}")
 
@@ -930,9 +816,8 @@ class App:
   LOGO_FRAME_LABELS = []
   DATA_FRAME_DATA = []
 
-  C_DRIVE = os.path.join("C:\\", "Users", os.getlogin(), "CamAssistant")
-  CONFIG_PATH = os.path.join(C_DRIVE, "config.ini")
-  APP_NAME = "CAM ASSISTANT"
+
+  APP_NAME = "CAM Assistant"
   SOURCE_PATH = None
   CURRENT_APP = None
 
@@ -940,22 +825,29 @@ class App:
   SETTINGS = {}
 
   def __init__(self, app):
-    current_file_directory = os.path.dirname(os.path.abspath(__file__))
-    self.CONFIG_PATH = os.path.join(current_file_directory, self.CONFIG_PATH)
+    # setup paths
+    self.__setup_paths()
+
+    # store instance of the app
     self.APP = app
+
+    # set the geometry of the window
     self.APP.geometry("800x500")
-    self.COLOR_SCHEMES = [scheme for scheme in ColorScheme]
+
+    # setup the color schemes to the app
+    self.__setup_color_scheme()
+
+    # setup the Json File Manager
     self.JsonFileManager = JsonFileManager()
+
+    # load standard settings
     self.__load_settings()
-    self.COLOR_SCHEME = ColorScheme[self.CONFIG.get('GENERAL', 'color_scheme')]
+
+    # load all of the json file data
+    self.__load_json()    
 
     # create 3 frames to hold data
-    self.LOGO_FRAME = Frame(self.APP, height=50)
-    self.LOGO_FRAME.pack(side="bottom", fill="x")
-    self.BUTTON_FRAME = Frame(self.APP, width=100)
-    self.BUTTON_FRAME.pack(side="left", fill="y")
-    self.DATA_frame = Frame(self.APP)
-    self.DATA_frame.pack(side="right", fill="both", expand=True)
+    self.__create_frames()
 
     # setup frames
     self.__setup_button_frame()
@@ -963,6 +855,7 @@ class App:
     self.__setup_home()
     self.__set_title()
 
+    # set the function to run on shut down
     self.APP.protocol("WM_DELETE_WINDOW", self.__on_close)
 
     # Register the hotkey callback
@@ -970,7 +863,23 @@ class App:
 
     # create a color scheme to the app, area to make different color schemes
     self.reset_colors()
+
+    # tkinter main loop
     self.APP.mainloop()
+
+  def __setup_paths(self):
+    self.C_DRIVE = os.path.join("C:\\", "Users", os.getlogin(), "CamAssistant")
+    self.CONFIG_PATH = os.path.join(self.C_DRIVE, "config.ini")
+    current_file_directory = os.path.dirname(os.path.abspath(__file__))
+    self.CONFIG_PATH = os.path.join(current_file_directory, self.CONFIG_PATH)
+
+
+  def __setup_color_scheme(self):
+    self.COLOR_SCHEMES = [scheme for scheme in ColorScheme]
+    try:
+      self.COLOR_SCHEME = ColorScheme[self.CONFIG.get('GENERAL', 'color_scheme')]
+    except:
+      self.COLOR_SCHEME = self.COLOR_SCHEMES[0]
 
   def __load_settings(self):
     # Check if config file exists
@@ -988,8 +897,6 @@ class App:
       with open(self.CONFIG_PATH, 'w') as config_file:
         self.CONFIG.write(config_file)
 
-    # loads json data
-    self.__load_json()
 
   def __load_json(self):
     try:
@@ -1003,8 +910,17 @@ class App:
       messagebox.showerror(f"Loading Failed", f"Failed to load data.\nClosing app.\n[ERROR]:{e}")
       self.APP.destroy()
 
+  def __create_frames(self):
+        self.LOGO_FRAME = Frame(self.APP, height=50)
+        self.LOGO_FRAME.pack(side="bottom", fill="x")
+        self.BUTTON_FRAME = Frame(self.APP, width=100)
+        self.BUTTON_FRAME.pack(side="left", fill="y")
+        self.DATA_frame = Frame(self.APP)
+        self.DATA_frame.pack(side="right", fill="both", expand=True)
+
   def __key_press(self, event):
-    #print(event.state, "----", event.keysym)
+    #print(event.state, "----", event.keysym) # debugs keypressed and prints what the button is
+    # right control button to edit folder defaults
     if event.keysym.lower() == "control_r":
       self.__edit_json()
 
@@ -1021,14 +937,17 @@ class App:
       lbl.config(bg=self.COLOR_SCHEME.value['logo_frame_background'],
                  fg=self.COLOR_SCHEME.value['logo_frame_font'])
     for widget in self.DATA_frame.winfo_children():
-      if widget.widgetName == "frame":
+      # print(widget.widgetName) # to debug the name of the widget
+      if widget.widgetName == "text":
+            widget.config(bg=self.COLOR_SCHEME.value['message_background'], fg=self.COLOR_SCHEME.value['message_font']) 
+      elif widget.widgetName == "frame":
         widget.config(bg=self.COLOR_SCHEME.value['data_frame_background'])
         for widg in widget.winfo_children():
           if widg.widgetName == "entry":
             if self.CURRENT_APP != Apps.FOLDERFACTORY:
               widg.config(
                 bg=self.COLOR_SCHEME.value['data_frame_entry_background'],
-                fg=self.COLOR_SCHEME.value['data_frame_entry_font'])
+                fg=self.COLOR_SCHEME.value['data_frame_entry_font'])           
           elif widg.widgetName == "checkbutton":
             widg.config(bg=self.COLOR_SCHEME.value['data_frame_background'],
                         fg=self.COLOR_SCHEME.value['checkbox_font'])
@@ -1049,96 +968,105 @@ class App:
           widget.config(bg=self.COLOR_SCHEME.value['data_frame_background'],
                         fg=self.COLOR_SCHEME.value['data_frame_font'])
 
+
+
   def __setup_button_frame(self):
     # creats all the buttons on the left hand side, follow format to add new buttons
-    buttons = [{'text':'HOME', 'command':self.__setup_home},
-               {'text':'THREAD EXPERT', 'command': self.__setup_thread_helper},
-               {'text':'FORMULA WIZARD', 'command':self.__setup_formulas},
-               {'text':'FOLDER FACTORY', 'command':self.__setup_folders},
-               {'text':'CODE VAULT', 'command':self.__setup_code_database},
-               {'text':'MESSAGE CENTER', 'command':self.__setup_message_center},
-               {'text':f"{self.COLOR_SCHEME.name.upper()} MODE", 'command':self.__change_colors}
+    buttons = [{'text': Apps.HOME.value, 'command':self.__setup_home},
+               {'text': Apps.THREADEXPERT.value, 'command': self.__setup_thread_helper},
+               {'text': Apps.FORMULAWIZARD.value, 'command':self.__setup_formulas},
+               {'text': Apps.FOLDERFACTORY.value , 'command':self.__setup_folders},
+               {'text': Apps.CODEVAULT.value, 'command':self.__setup_code_database},
+               {'text':Apps.PROBEBUILDER.value, 'command': self.__setup_probe_builder},
+               {'text':Apps.MESSAGECENTER.value, 'command':self.__setup_message_center},
+               {'text':f"{self.COLOR_SCHEME.name.upper()} MODE", 'command':self.__change_colors}               
                ]
     for index, button in enumerate(buttons):
-      btn = Button(self.BUTTON_FRAME, text=button['text'], width=15, command=button['command'], font=("Georgia", 10))
+      btn = Button(self.BUTTON_FRAME, text=button['text'], width=15, command=button['command'], font=(None, 10))
       btn.grid(padx=7, pady=10, row=index, column=0)
       self.BUTTON_FRAME_BUTTONS.append(btn)
 
 
   def __setup_logo_frame(self):
-    lbl = Label(self.LOGO_FRAME,
-                text=f"Powered by Winchester Automation",
-                font=('Courier New', 10))
+    lbl = Label(self.LOGO_FRAME, text=f"Powered by Winchester Automation", font=('Courier New', 10))
     lbl.pack()
     self.LOGO_FRAME_LABELS.append(lbl)
 
   def __setup_home(self):
+    self.CURRENT_APP = Apps.HOME
     self.__reset_data_frame()
     self.__set_title()
-    self.CURRENT_APP = Apps.HOME
     lbl = Label(self.DATA_frame,
-                text=f"Welcome to {self.APP_NAME.title()}!",
+                text=f"Welcome to {self.APP_NAME}!",
                 font=(None, 30))
     lbl.pack(expand=True, anchor='center')
     self.reset_colors()
 
-  def __setup_thread_helper(self, name="THREAD EXPERT"):
-    self.__reset_data_frame()
-    self.__set_title(f" - {name}")
+  def __setup_thread_helper(self):
     self.CURRENT_APP = Apps.THREADEXPERT
-    ThreadExpert (self.DATA_frame, name, self.JSON_THREADS)
+    self.__reset_data_frame()
+    self.__set_title()    
+    ThreadExpert (self.DATA_frame, self.CURRENT_APP.value, self.JSON_THREADS)
     self.reset_colors()
 
-  def __setup_formulas(self, name="FORMULA WIZARD"):
-    self.__reset_data_frame()
-    self.__set_title(f" - {name}")
+  def __setup_formulas(self):
     self.CURRENT_APP = Apps.FORMULAWIZARD
+    self.__reset_data_frame()
+    self.__set_title()    
     Formulas(self.DATA_frame,
-             title=name,
+             title=self.CURRENT_APP.value,
              json_file=self.JSON_FORMULAS,
              app=self)
     self.reset_colors()
 
-  def __setup_folders(self, name="FOLDER FACTORY"):
-    self.__reset_data_frame()
-    self.__set_title(f" - {name}")
-    self.__load_json()
+  def __setup_folders(self):
     self.CURRENT_APP = Apps.FOLDERFACTORY
+    self.__reset_data_frame()
+    self.__set_title()
+    self.__load_json()
     FolderFactory(self.DATA_frame,
-              title=name,
+              title=self.CURRENT_APP.value,
               json_file=self.JSON_FOLDERS,
               app=self.APP)
     self.reset_colors()
 
-  def __setup_code_database(self, name="CODE VAULT"):
-    self.__reset_data_frame()
-    self.__set_title(f" - {name}")
+  def __setup_code_database(self):
     self.CURRENT_APP = Apps.CODEVAULT
+    self.__reset_data_frame()
+    self.__set_title()
     CodeVault(self.DATA_frame,
-                 title=name,
+                 title=self.CURRENT_APP.value,
                  json_file=self.JSON_CODE_VAULT,
                  app=self.APP)
     self.reset_colors()
 
-  def __setup_message_center(self, name="MESSAGE CENTER"):
+  def __setup_probe_builder(self):
+    self.CURRENT_APP = Apps.PROBEBUILDER
     self.__reset_data_frame()
-    self.__set_title(f" - {name}")
-    self.CURRENT_APP = Apps.MESSAGECENTER
-    MessageCenter(self.DATA_frame,
-                 title=name,
+    self.__set_title()
+    ProbeBuilder(self.DATA_frame,
+                 title=self.CURRENT_APP.value,
+                 json_file=self.JSON_CODE_VAULT,
                  app=self.APP)
     self.reset_colors()
-    
-    
+
+  def __setup_message_center(self):
+    self.CURRENT_APP = Apps.MESSAGECENTER    
+    self.__reset_data_frame()
+    self.__set_title()
+    MessageCenter(self.DATA_frame,
+                 title=self.CURRENT_APP.value,
+                 app=self.APP)
+    self.reset_colors()
+        
 
   def __edit_json(self):
-    name = "Folder Factory Editor"
-    self.__reset_data_frame()
-    self.__set_title(f" - {name}")
     self.CURRENT_APP = Apps.JSONEDITOR
+    self.__reset_data_frame()
+    self.__set_title()    
     filename = self.JSON_FORMULAS
     JsonEditor(self.DATA_frame,
-                 title=name,
+                 title=self.CURRENT_APP.value,
                  json_file=self.JSON_FOLDERS,
                  app=self)
     self.reset_colors()
@@ -1161,8 +1089,11 @@ class App:
       widget.destroy()
     self.DATA_FRAME_DATA.clear()
 
-  def __set_title(self, page=""):
-    self.APP.title(f"{self.APP_NAME.title()} {page.title()}")
+  def __set_title(self):
+    title = ""
+    if self.CURRENT_APP != Apps.HOME:
+      title = f" - {self.CURRENT_APP.value}"
+    self.APP.title(f"{self.APP_NAME} {title.title()}")
 
   def __on_close(self):
     # update stuff on close and resave data
@@ -1173,6 +1104,19 @@ class App:
       self.CONFIG.write(config_file)
 
     self.APP.destroy()
+
+class Apps(Enum):
+    """
+    all of the sections of the apps name, come from here
+    """
+    HOME = "HOME"
+    THREADEXPERT = "THREAD EXPERT"
+    FORMULAWIZARD = "FORMULA WIZARD"
+    FOLDERFACTORY = "FOLDER FACTORY"
+    CODEVAULT = "CODE VAULT"
+    JSONEDITOR  = "JSON EDITOR"
+    PROBEBUILDER  = "PROBE BUILDER"
+    MESSAGECENTER = "MESSAGE CENTER"
 
 def main():
   root = Tk()
