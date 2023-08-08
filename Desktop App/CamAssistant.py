@@ -47,16 +47,70 @@ class ColorScheme(Enum):
     "message_font":"black"
   }
 
-class ThreadExpert:
+class BaseApp:
+  """
+  a class to store app data that every app will use. 
+  """
+
+  def __init__(self, app, frame, data=None):
+    # store instance of the app
+    self.app = app
+    # store the frame we can use with these apps
+    self.frame = frame
+    # store data if it exists, either be None or json data
+    self.data = data
+
+    self.__create_title()
+
+  def __create_title(self):
+    # sets title to current app
+    title = self.app.CURRENT_APP.value.title()
+
+    # if current app is home, set the title to welcome
+    if self.app.CURRENT_APP == Apps.HOME:
+      title = f"Welcome to {self.app.APP_NAME}"
+    # create the label
+    lbl = Label(self.frame, text=title, font=(None, 30))
+    # pack the label, home is centered, rest are on the top
+    if self.app.CURRENT_APP == Apps.HOME:
+      lbl.pack(expand=True, anchor='center')
+    else:
+      lbl.pack()
+
+class Home(BaseApp):
+    """
+    creates the welcome home page
+    """
+    def __init__(self, app, frame, data=None):
+      super().__init__(app, frame, data)
 
 
-  def __init__(self, frame, title, json_file):
-    self.THREAD_DATA = [thread for thread in json_file]
-    self.THREADS = [thread["size"] for thread in self.THREAD_DATA]
-    self.DATA_FRAME = frame
-    Label(self.DATA_FRAME, text=title, font=(None, 30)).pack()
-    frame = Frame(self.DATA_FRAME)
+class ThreadExpert(BaseApp):
+
+  def __init__(self, app, frame, data):
+    super().__init__(app, frame, data=data)
+
+    # creates the lists for all of the thread data
+    self.__get_thread_data()
+
+    # creates the entire frame that the user can see
+    self.__create_frame()
+
+    # updates all of the boxes to show data right when the app is opened
+    self.__update_entries()
+
+  def __get_thread_data(self):
+      # grab all of the thread data
+      self.THREAD_DATA = [thread for thread in self.data]
+      # create the list for the drop down
+      self.THREADS = [thread['size'] for thread in self.THREAD_DATA]
+
+  def __create_frame(self):
+    # creates a frame to store all of the labels & entries
+    frame = Frame(self.frame)
     frame.pack()
+
+    # a list of all of the labels for the entry boxes    
     # keep the enter chamfer size as last in this list
     labels = [
       "Minor Diameter:", "Major Diameter:", "Threads / Inch (Pitch):", "Cutting Tap:", "Roll Tap:",
@@ -64,10 +118,14 @@ class ThreadExpert:
     ]
     self.ENTRIES = []
     btn_index = 0
+
+    # creates label for the drop down mwnu
     Label(frame, text="Select Threads:", font=(None, 14)).grid(row=0, column=0)
+
+    # creates string var for the drop down
     self.SELECTED_THREAD = StringVar(frame)
 
-    # create the the option menu and all the entry boxes
+    # create the the option menu
     self.SELECTED_THREAD.set(self.THREADS[0])
     optionMenu = OptionMenu(frame,
                             self.SELECTED_THREAD,
@@ -77,6 +135,7 @@ class ThreadExpert:
     optionMenu['menu'].config(font=(None, 15))
     optionMenu.grid(pady=5, row=0, column=1)
 
+    # creates all of the entry boxes to store the thread data
     for index, lbl in enumerate(labels, 1):
       Label(frame, text=lbl, font=(None, 14)).grid(pady=2, row=index, column=0)
       entry = Entry(frame, font=(None, 14))
@@ -84,19 +143,17 @@ class ThreadExpert:
         entry.configure(state='disabled')
         entry.bind("<KeyRelease>", self.__update_chamfers)
       entry.bind("<Return>", self.__bind_entries)
-      #entry.trace ("w", self.__bind_entries)# ---------------------
       entry.grid(pady=2, row=index, column=1)
       self.ENTRIES.append(entry)
       btn_index += 1
 
-    # setup enter button
+    # setup calculate button
     self.ENTER_BTN = Button(frame,
                             text="Calculate Chamfer",
                             command=self.__update_entries,
                             width=35,
                             font=(None, 14))
     self.ENTER_BTN.grid(pady=5, row=btn_index + 1, column=0, columnspan=2)
-    self.__update_entries()
 
   # Define callback function for "Enter" button
   def __update_entries(self, events=""):
@@ -206,88 +263,105 @@ class PlaceholderEntry (Entry):
       return txt.title().replace(" ", "_")
     return txt.upper().replace(" ", "_")
 
-class FolderFactory:
+class FolderFactory(BaseApp):
+  """
+  creates the welcome home page
+  """    
+  def __init__(self, app, frame, data=None):
+      super().__init__(app, frame, data)
+      self.__load_folders()
 
-  FILE_PATH = ''
+      # create file path label
+      self.__create_file_path_label()
 
-  def __init__(self, frame, title, json_file, app):
-    folders = [thread for thread in json_file]
-    folders.sort(key=lambda x: x['name'])
+      self.__create_frame()
 
-    self.DATA_FRAME = frame
-    self.APP = app
-    self.TITLE = title
-    Label(self.DATA_FRAME, text=title, font=(None, 30)).pack()
+  
+  def __create_frame(self):
+      # create frame to hold folders
+      partFrame = Frame(self.frame)
+      partFrame.pack(padx=10)
 
+      # create IntVar to hold whethe to open folder or not
+      self.CREATE_PART_FOLDER_VAR = IntVar()
+      self.CREATE_PART_FOLDER_VAR.set(1)
+
+      # create label to open folder or not
+      create_folder_checkbox = Checkbutton(partFrame, text="Open Part Folder?", variable=self.CREATE_PART_FOLDER_VAR, font=(None, 16))
+      create_folder_checkbox.grid(pady=5, row=0, columnspan=4)
+
+      # create section to hold part number & part name
+      font = (None, 12)
+      part_number_label = Label (partFrame, text="Part Number:", font=font)
+
+      # part number section, label and placeholder widget
+      part_number_label = Label(partFrame, text="Part Number:", font=font)
+      part_number_label.grid(padx=4,pady=4, row=1, column=0)
+      self.PART_NUMBER_ENTRY = PlaceholderEntry(partFrame, placeholder="Enter Part Number", font=font)
+      self.PART_NUMBER_ENTRY.grid(padx=4, pady=4, row=1, column=1)
+
+      # part name section and placeholder widget
+      part_name_label = Label(partFrame, text="Part Name:", font=font)
+      part_name_label.grid(padx=4, row=1, column=2)
+      self.PART_NAME_ENTRY = PlaceholderEntry(partFrame, placeholder="Enter Part Name", font=font)
+      self.PART_NAME_ENTRY.grid(padx=4, row=1, column=3)
+
+      # create frame to hold all of the check boxes to keep them organized
+      checkBoxFrame = Frame(self.frame)
+      checkBoxFrame.pack()
+
+      # store all of the info to create the check boxes
+      self.FOLDERS = [{
+        'name': folder['name'],
+        'defaultOn': folder['defaultOn'],
+        'var': IntVar(checkBoxFrame, value=1)
+      } for folder in self.__load_folders()]
+
+      # store the location of the check boxes
+      location = {'row': 0, 'column': 0}
+
+      # create the check boxes
+      for index, folder in enumerate(self.FOLDERS):
+        cb = Checkbutton(checkBoxFrame, text=f"{folder['name']}", variable=folder['var'], font=font)
+        folder['var'].set(folder['defaultOn'])
+        if index % 3 == 0:
+          location['row'] += 1
+          location['column'] = 0
+        else:
+          location['column'] += 1
+        cb.grid(padx=5, pady=5, row=location['row'], column=location['column'])
+
+      # create the buttons on the bottom of the frame
+      buttonFrame = Frame(self.frame)
+      buttonFrame.pack()
+      Button(buttonFrame,
+             text="Set Path",
+             command=self.__set_file,
+             width=15,
+             font=(None, 14)).grid(padx=5, row=0, column=0)
+      Button(buttonFrame,
+             text="Produce Folders",
+             command=self.__create_folders,
+             width=15,
+             font=(None, 14)).grid(padx=5, row=0, column=1)
+      Button(buttonFrame,
+             text="Toggle All",
+             command=self.__toggle_all,
+             width=15,
+             font=(None, 14)).grid(padx=5, row=0, column=2)
+
+  def __load_folders(self):
+    # load folders from json file
+    folders = [folder for folder in self.data]
+    # sort folders by name
+    folders.sort(key=lambda x:x['name'])
+    # return list of folders sorted by the name
+    return folders
+
+  def __create_file_path_label(self):
     # set file path label
-    self.FILE_PATH_LABEL = Label(self.DATA_FRAME,
-                                 text=f"Select Folder",
-                                 font=(None, 16))
+    self.FILE_PATH_LABEL = Label(self.frame, text=f"Select Folder", font=(None, 16))
     self.FILE_PATH_LABEL.pack()
-
-    partFrame = Frame(self.DATA_FRAME)
-    partFrame.pack(padx=10)
-
-    self.CREATE_PART_FOLDER_VAR = IntVar()
-    self.CREATE_PART_FOLDER_VAR.set(1)
-    create_folder_checkbox = Checkbutton(partFrame, text="Open Part Folder?", variable=self.CREATE_PART_FOLDER_VAR, font=(None, 16))
-    create_folder_checkbox.grid(pady=5, row=0, columnspan=4)
-
-    part_number_label = Label (partFrame, text="Part Number:", font=(None, 12))
-
-    # part number section, label and placeholder widget
-    part_number_label = Label(partFrame, text="Part Number:", font=(None, 12))
-    part_number_label.grid(padx=4,pady=4, row=1, column=0)
-    self.PART_NUMBER_ENTRY = PlaceholderEntry(partFrame, placeholder="Enter Part Number", font=(None, 12))
-    self.PART_NUMBER_ENTRY.grid(padx=4, pady=4, row=1, column=1)
-
-    # part name section and placeholder widget
-    part_name_label = Label(partFrame, text="Part Name:", font=(None, 12))
-    part_name_label.grid(padx=4, row=1, column=2)
-    self.PART_NAME_ENTRY = PlaceholderEntry(partFrame, placeholder="Enter Part Name", font=(None, 12))
-    self.PART_NAME_ENTRY.grid(padx=4, row=1, column=3)
-
-    checkBoxFrame = Frame(self.DATA_FRAME)
-    checkBoxFrame.pack()
-
-    self.FOLDERS = [{
-      'name': folder['name'],
-      'defaultOn': folder['defaultOn'],
-      'var': IntVar(checkBoxFrame, value=1)
-    } for folder in folders]
-
-    location = {'row': 0, 'column': 0}
-    for index, folder in enumerate(self.FOLDERS):
-      cb = Checkbutton(checkBoxFrame,
-                       text=f"{folder['name']}",
-                       variable=folder['var'],
-                       font=(None, 12))
-      folder['var'].set(
-        folder['defaultOn'])  # set the initial state of the checkbox
-      if index % 3 == 0:
-        location['row'] += 1
-        location['column'] = 0
-      else:
-        location['column'] += 1
-      cb.grid(padx=5, pady=5, row=location['row'], column=location['column'])
-
-    buttonFrame = Frame(self.DATA_FRAME)
-    buttonFrame.pack()
-    Button(buttonFrame,
-           text="Set Path",
-           command=self.__set_file,
-           width=15,
-           font=(None, 14)).grid(padx=5, row=0, column=0)
-    Button(buttonFrame,
-           text="Produce Folders",
-           command=self.__create_folders,
-           width=15,
-           font=(None, 14)).grid(padx=5, row=0, column=1)
-    Button(buttonFrame,
-           text="Toggle All",
-           command=self.__toggle_all,
-           width=15,
-           font=(None, 14)).grid(padx=5, row=0, column=2)
 
   def __create_folders(self):
     if self.FILE_PATH != "":
@@ -335,7 +409,7 @@ class FolderFactory:
 
   def __set_file(self):
     file_path = filedialog.askdirectory(
-      title=f"{self.TITLE.title()} - Select Directory")
+      title=f"{self.app.CURRENT_APP.value.title()} - Select Directory")
     if os.path.exists(file_path):
       self.FILE_PATH = file_path
       self.FILE_PATH_LABEL.config(text=f"{self.FILE_PATH}")
@@ -842,6 +916,7 @@ class App:
 
     # load standard settings
     self.__load_settings()
+    self.__load_emial_settings()
 
     # load all of the json file data
     self.__load_json()    
@@ -872,6 +947,7 @@ class App:
     self.CONFIG_PATH = os.path.join(self.C_DRIVE, "config.ini")
     current_file_directory = os.path.dirname(os.path.abspath(__file__))
     self.CONFIG_PATH = os.path.join(current_file_directory, self.CONFIG_PATH)
+    self.EMAIL_PATH = os.path.join(current_file_directory, "data.ini")
 
 
   def __setup_color_scheme(self):
@@ -881,6 +957,21 @@ class App:
     except:
       self.COLOR_SCHEME = self.COLOR_SCHEMES[0]
 
+  def __load_emial_settings(self):
+    # Check if config file exists
+    if os.path.isfile(self.CONFIG_PATH):
+      # File exists, load it
+      CONFIG = configparser.ConfigParser()
+      CONFIG.read(self.EMAIL_PATH)
+      print(CONFIG.sections)
+      email = CONFIG.get("data", "email")
+      #self.EMAIL_DATA = self.CONFIG.get("Data")
+      print(email)
+    else:
+      # Display the error message and close the app
+      messagebox.showerror(f"Loading Failed", f"Failed to load emial config.\nClosing app.\n[ERROR]:{e}")
+      self.APP.destroy()
+
   def __load_settings(self):
     # Check if config file exists
     if os.path.isfile(self.CONFIG_PATH):
@@ -889,13 +980,9 @@ class App:
       self.CONFIG.read(self.CONFIG_PATH)
       self.SOURCE_PATH = self.CONFIG.get("Paths", "source")
     else:
-      # File doesn't exist, create it
-      self.CONFIG = configparser.ConfigParser()
-      # Add your default settings or leave it empty
-      self.CONFIG['GENERAL'] = {"color_scheme":"DARK","version":"-1"}
-      self.CONFIG['Paths'] = {"source": "C:\\Users\\dwinc\\Desktop\\Setup Folder"}
-      with open(self.CONFIG_PATH, 'w') as config_file:
-        self.CONFIG.write(config_file)
+      # Display the error message and close the app
+      messagebox.showerror(f"Loading Failed", f"Failed to load config.\nClosing app.\n[ERROR]:{e}")
+      self.APP.destroy()
 
 
   def __load_json(self):
@@ -996,17 +1083,14 @@ class App:
     self.CURRENT_APP = Apps.HOME
     self.__reset_data_frame()
     self.__set_title()
-    lbl = Label(self.DATA_frame,
-                text=f"Welcome to {self.APP_NAME}!",
-                font=(None, 30))
-    lbl.pack(expand=True, anchor='center')
+    Home(self, self.DATA_frame, None)
     self.reset_colors()
 
   def __setup_thread_helper(self):
     self.CURRENT_APP = Apps.THREADEXPERT
     self.__reset_data_frame()
     self.__set_title()    
-    ThreadExpert (self.DATA_frame, self.CURRENT_APP.value, self.JSON_THREADS)
+    ThreadExpert (self, self.DATA_frame, self.JSON_THREADS)
     self.reset_colors()
 
   def __setup_formulas(self):
@@ -1024,10 +1108,7 @@ class App:
     self.__reset_data_frame()
     self.__set_title()
     self.__load_json()
-    FolderFactory(self.DATA_frame,
-              title=self.CURRENT_APP.value,
-              json_file=self.JSON_FOLDERS,
-              app=self.APP)
+    FolderFactory(self, self.DATA_frame, self.JSON_FOLDERS)
     self.reset_colors()
 
   def __setup_code_database(self):
