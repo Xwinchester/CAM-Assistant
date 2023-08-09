@@ -463,44 +463,44 @@ class FormulaEntry (Entry):
     # Return the internal numeric value as a float
     return self.value
 
-class Formulas:
+class Formulas(BaseApp):
 
   QUESTIONS = []
   ANSWER = None
   CURRENT_FORMULA = None
   ROUNDING = None
 
-  def __init__(self, frame, title, json_file, app):
-    self.FORMULAS = [formula for formula in json_file]
-
-    self.DATA_FRAME = frame
-    self.APP = app
-    Label(self.DATA_FRAME, text=title, font=(None, 30)).pack()
+  
+  def __init__(self, app, frame, data):
+    super().__init__(app, frame, data)
+    self.__load_formulas()
 
     # set file path label
-    self.FILE_PATH_LABEL = Label(self.DATA_FRAME,
-                                 text=f"Select Formula",
-                                 font=(None, 16))
+    self.FILE_PATH_LABEL = Label(self.frame, text=f"Select Formula", font=(None, 16))
     self.FILE_PATH_LABEL.pack()
 
     # Create a StringVar to hold the selected formula
-    self.selected_formula = StringVar(self.DATA_FRAME)
+    self.selected_formula = StringVar(self.frame)
     self.selected_formula.set(self.FORMULAS[0]["name"])
 
-    self.thread_menu = OptionMenu(self.DATA_FRAME, self.selected_formula,
-                                  *[name["name"] for name in self.FORMULAS])
+    # setup drop down menu
+    self.thread_menu = OptionMenu(self.frame, self.selected_formula, *[name["name"] for name in self.FORMULAS])
     self.thread_menu.config(font=(None, 15))
     self.thread_menu['menu'].config(font=('Courier', 15))
     self.thread_menu.pack(anchor="n")
 
     # Create a new LabelFrame
-    self.question_frame = LabelFrame(self.DATA_FRAME, text="", font=(None, 18))
+    self.question_frame = LabelFrame(self.frame, text="", font=(None, 18))
     self.question_frame.pack(padx=10, pady=10)
 
     # Create a trace to keep track of the option selected
     self.selected_formula.trace("w", self.__fill_in_questions)
 
     self.__fill_in_questions()
+
+  def __load_formulas(self):
+      # load formulas
+      self.FORMULAS = [formula for formula in self.data]
 
   def __fill_in_questions(self, *args):
     for f in self.FORMULAS:
@@ -527,16 +527,14 @@ class Formulas:
 
     self.ANSWER["lbl"].grid(pady=5, row=idx, column=0)
     self.ANSWER["entry"].grid(pady=5, row=idx, column=1)
-    self.APP.reset_colors()
+    self.app.reset_colors()
 
   def __create_question(self, name):
     label = Label(self.question_frame,
                   text=f"{name}:",
-                  bg=self.APP.COLOR_SCHEME.value['data_frame_background'],
-                  fg=self.APP.COLOR_SCHEME.value['data_frame_font'],
+                  bg=self.app.COLOR_SCHEME.value['data_frame_background'],
+                  fg=self.app.COLOR_SCHEME.value['data_frame_font'],
                   font=(None, 15))
-    #str_var = StringVar(self.DATA_FRAME)
-    #str_var.set("0.")
     entry = FormulaEntry(self.question_frame, font=(None, 15))
 
     entry.bind("<FocusOut>", self.__solve_equaiton)
@@ -551,8 +549,8 @@ class Formulas:
     answer_label = Label(
       self.question_frame,
       text='answer',
-      bg=self.APP.COLOR_SCHEME.value['data_frame_background'],
-      fg=self.APP.COLOR_SCHEME.value['data_frame_font'],
+      bg=self.app.COLOR_SCHEME.value['data_frame_background'],
+      fg=self.app.COLOR_SCHEME.value['data_frame_font'],
       font=(None, 15))
     #answer_entry = Entry(self.question_frame, font=(None, 15))
     answer_entry = FormulaEntry(self.question_frame, rounding=self.ROUNDING, font=(None, 15))
@@ -608,40 +606,41 @@ class Formulas:
     except:
       pass
 
-class CodeVault:
+class CodeVault(BaseApp):
 
   FILE_PATH = ""
-  MACHINE_DATA = []
+  StoredCode = []
 
-  def __init__(self, frame, title, json_file, app):
-    self.MACHINE_DATA = [machine for machine in json_file]
-    self.MACHINE_DATA.sort(key=lambda x: x['name'])
+  def __init__(self, app, frame, data):
+    super ().__init__ (app, frame, data)
+    # load code data
+    self.StoredCode = [file for file in self.data]
+    self.StoredCode.sort(key=lambda x: x['name'])
 
-    self.DATA_FRAME = frame
-    self.APP = app
-    Label(self.DATA_FRAME, text=title, font=(None, 30)).pack()
+    # store colors for off and even index in treeview
+    self.colors = {'odd':'white', 'even': 'light gray'}
 
     # set file path label
-    self.FILE_PATH_LABEL = Label(self.DATA_FRAME,
+    self.FILE_PATH_LABEL = Label(self.frame,
                                  text=f"Select Machine",
                                  font=(None, 16))
     self.FILE_PATH_LABEL.pack()
 
     # Create a StringVar to hold the selected machine
-    self.selected_machine = StringVar(self.DATA_FRAME)
-    self.selected_machine.set(self.MACHINE_DATA[0]['name'])
+    self.selected_machine = StringVar(self.frame)
+    self.selected_machine.set(self.StoredCode[0]['name'])
 
     # Create an OptionMenu of thread names
     self.thread_menu = OptionMenu(
-      self.DATA_FRAME, self.selected_machine,
-      *[machine['name'] for machine in self.MACHINE_DATA])
+      self.frame, self.selected_machine,
+      *[file['name'] for file in self.StoredCode])
     self.thread_menu.config(font=(None, 15))
     self.thread_menu['menu'].config(font=(None, 15))
     self.thread_menu.pack(anchor="n")
 
     # Create an object of Style widget
     try:
-      self.style = ttk.Style(self.DATA_FRAME)
+      self.style = ttk.Style(self.frame)
       aktualTheme = self.style.theme_use()
       self.style.theme_create("dummy", parent=aktualTheme)
       self.style.theme_use("dummy")
@@ -651,7 +650,7 @@ class CodeVault:
       pass
 
     # create treeview
-    self.tree = ttk.Treeview(self.DATA_FRAME, columns=("code", "description"))
+    self.tree = ttk.Treeview(self.frame, columns=("code", "description"))
 
     self.tree.heading('code', text="Code")
     self.tree.heading('description', text='Description')
@@ -681,15 +680,15 @@ class CodeVault:
 
   def __load_data(self, *args):
     self.tree.delete(*self.tree.get_children())
-    machine_data = next(machine for machine in self.MACHINE_DATA
-                        if machine["name"] == self.selected_machine.get())
-    for line in machine_data['data']:
+    StoredCode = next(file for file in self.StoredCode
+                        if file["name"] == self.selected_machine.get())
+    for line in StoredCode['data']:
       self.tree.insert("", "end", values=(line["code"], line["description"]))
     self.treeview_sort_column("code", False)
 
     # Define the tag for even rows
-    self.tree.tag_configure("even", background="light gray")
-    self.tree.tag_configure("odd", background="white")
+    self.tree.tag_configure("even", background=self.colors['even'])
+    self.tree.tag_configure("odd", background=self.colors['odd'])
 
     # Apply the tag to the appropriate rows
     for i in range(self.tree.get_children().__len__()):
@@ -705,13 +704,11 @@ class CodeVault:
     for index, (val, k) in enumerate(l):
       self.tree.move(k, '', index)
 
-class ProbeBuilder:
+class ProbeBuilder(BaseApp):
 
 
-  def __init__(self, frame, title, json_file, app):
-      self.DATA_FRAME = frame
-      self.APP = app
-      Label(self.DATA_FRAME, text=title, font=(None, 30)).pack()
+  def __init__(self, app, frame, data):
+    super ().__init__ (app, frame, data)
 
 
 
@@ -743,22 +740,19 @@ class JsonFileManager:
         return self.data.get(file_path)
 
 
-class JsonEditor:
+class JsonEditor(BaseApp):
 
-  def __init__(self, frame, title, json_file, app):
-    self.MACHINE_DATA = [formula for formula in json_file]
+  def __init__(self, app, frame, data):
+    super().__init__(app, frame, data)
+    self.StoredCode = [folder for folder in self.data]
     self.FILE_PATH = os.path.join(app.C_DRIVE, "folders.json")
 
-    self.DATA_FRAME = frame
-    self.APP = app
-    self.JSON_DATA = json_file
-    Label (self.DATA_FRAME, text=title, font=(None, 30)).pack (pady=5)
     # add save button to save json data
-    self.save_button = Button (self.DATA_FRAME, text="Save Data", font=(None, 12), command=self.save_json)
+    self.save_button = Button (self.frame, text="Save Data", font=(None, 12), command=self.save_json)
     self.save_button.pack (pady=5)
 
     # create text area
-    self.textarea = Text (self.DATA_FRAME, wrap="word")
+    self.textarea = Text (self.frame, wrap="word")
     self.textarea.pack (padx=8, pady=8, fill="both", expand=True)
 
     self.update_textarea()
@@ -766,14 +760,14 @@ class JsonEditor:
   def save_json(self):
         if self.update_json_data():
           print("Saving json")
-          self.APP.JsonFileManager.save_json_file(self.FILE_PATH, data=self.JSON_DATA)
+          self.app.JsonFileManager.save_json_file(self.FILE_PATH, data=self.JSON_DATA)
           self.save_button.config(text="File Saved")
         else:
           self.save_button.config(text="Error Not Saved")
 
   def update_textarea(self):
     self.textarea.delete (1.0, END)
-    formatted_data = self.convert_json_to_single_line (self.JSON_DATA)
+    formatted_data = self.convert_json_to_single_line (self.data)
     self.textarea.insert (1.0, formatted_data)
 
   def convert_json_to_single_line(self, json_data):
@@ -800,9 +794,10 @@ class JsonEditor:
         self.JSON_DATA = json_data
         return True
 
-class MessageCenter:
+class MessageCenter(BaseApp):
 
-  def __init__(self, frame, title, app):
+  def __init__(self, app, frame, data):
+    super().__init__(app, frame, data)
     # SMTP settings
     self.SERVER ="smtp.office365.com"
     self.PORT = 587
@@ -812,24 +807,20 @@ class MessageCenter:
                   "password":"4442drowssap",
                   "recipients":["moc.kooltuo@noitamotuaretsehcniw"]} 
 
-    # app settings
-    self.DATA_FRAME = frame
-    self.APP = app
-    Label (self.DATA_FRAME, text=title, font=(None, 30)).pack (pady=5)
 
     #Label (self.DATA_FRAME, text=message, font=(None, 12)).pack (pady=5)
     # add save button to save json data
-    self.send_button = Button (self.DATA_FRAME, text="Send Message", font=(None, 14), command=self.__send_message)
+    self.send_button = Button (self.frame, text="Send Message", font=(None, 14), command=self.__send_message)
     self.send_button.pack (pady=5)
 
     # create text area
-    self.textarea = Text (self.DATA_FRAME, wrap="word")
+    self.textarea = Text (self.frame, wrap="word")
     self.textarea.pack (padx=12, pady=12, fill="both", expand=True)
     # Bind the Text widget to the text change event
     self.textarea.bind("<FocusIn>", self.on_text_change)
 
     # adds starting message to TextArea
-    self.message = f"Welcome to the {title.title()}\nShare your thoughts\n   - Report any Bugs\n   - Suggest Improvements\n   - Report any ideas you would like to see implemented\n"
+    self.message = f"Welcome to the {self.app.CURRENT_APP.value.title()}\nShare your thoughts\n   - Report any Bugs\n   - Suggest Improvements\n   - Report any ideas you would like to see implemented\n"
     self.insert_text(self.message)
 
   def on_text_change(self, event):
@@ -963,10 +954,10 @@ class App:
       # File exists, load it
       CONFIG = configparser.ConfigParser()
       CONFIG.read(self.EMAIL_PATH)
-      print(CONFIG.sections)
-      email = CONFIG.get("data", "email")
+      #print(CONFIG.sections)
+      #email = CONFIG.get("data", "email")
       #self.EMAIL_DATA = self.CONFIG.get("Data")
-      print(email)
+      #print(email)
     else:
       # Display the error message and close the app
       messagebox.showerror(f"Loading Failed", f"Failed to load emial config.\nClosing app.\n[ERROR]:{e}")
@@ -1096,11 +1087,8 @@ class App:
   def __setup_formulas(self):
     self.CURRENT_APP = Apps.FORMULAWIZARD
     self.__reset_data_frame()
-    self.__set_title()    
-    Formulas(self.DATA_frame,
-             title=self.CURRENT_APP.value,
-             json_file=self.JSON_FORMULAS,
-             app=self)
+    self.__set_title()
+    Formulas(self, self.DATA_frame, self.JSON_FORMULAS)
     self.reset_colors()
 
   def __setup_folders(self):
@@ -1115,29 +1103,21 @@ class App:
     self.CURRENT_APP = Apps.CODEVAULT
     self.__reset_data_frame()
     self.__set_title()
-    CodeVault(self.DATA_frame,
-                 title=self.CURRENT_APP.value,
-                 json_file=self.JSON_CODE_VAULT,
-                 app=self.APP)
+    CodeVault (self, self.DATA_frame, self.JSON_CODE_VAULT)
     self.reset_colors()
 
   def __setup_probe_builder(self):
     self.CURRENT_APP = Apps.PROBEBUILDER
     self.__reset_data_frame()
     self.__set_title()
-    ProbeBuilder(self.DATA_frame,
-                 title=self.CURRENT_APP.value,
-                 json_file=self.JSON_CODE_VAULT,
-                 app=self.APP)
+    ProbeBuilder(self, self.DATA_frame, None)
     self.reset_colors()
 
   def __setup_message_center(self):
     self.CURRENT_APP = Apps.MESSAGECENTER    
     self.__reset_data_frame()
     self.__set_title()
-    MessageCenter(self.DATA_frame,
-                 title=self.CURRENT_APP.value,
-                 app=self.APP)
+    MessageCenter(self, self.DATA_frame, None)
     self.reset_colors()
         
 
@@ -1146,10 +1126,7 @@ class App:
     self.__reset_data_frame()
     self.__set_title()    
     filename = self.JSON_FORMULAS
-    JsonEditor(self.DATA_frame,
-                 title=self.CURRENT_APP.value,
-                 json_file=self.JSON_FOLDERS,
-                 app=self)
+    JsonEditor(self, self.DATA_frame, self.JSON_FOLDERS)
     self.reset_colors()
 
   def __change_colors(self):
