@@ -704,13 +704,169 @@ class CodeVault(BaseApp):
     for index, (val, k) in enumerate(l):
       self.tree.move(k, '', index)
 
+class Cycle(Enum):
+
+  HEADER = {'name':'HEADER'}
+  PPM = {'name':'PPM'}
+  SINGLE_PT = {'name':'SINGLE PT'}
+  BORE_BOSS = {'name':'BORE / BOSS'}
+  WEB_POCKET = {'name':'WEB / POCKET'}
+
+class CycleEditor(Toplevel):
+  def __init__(self, parent, cycle_data, index):
+        super().__init__(parent)
+        self.title("Cycle Editor")
+
+        # stores index of item we are editing
+        self.index = index
+        
+        self.cycle_data = cycle_data
+        self.entry_vars = []
+
+        self.__create_widgets()
+
+  def __create_widgets(self):
+        for label_text, entry_text in self.cycle_data.items():
+            label = Label(self, text=label_text)
+            label.pack()
+
+            entry_var = StringVar()
+            entry_var.set(entry_text)
+            entry = Entry(self, textvariable=entry_var)
+            entry.pack()
+
+            self.entry_vars.append(entry_var)
+        enter_button = Button(self, text="Enter", command=self.__on_enter)
+        enter_button.pack()
+
+  def __on_enter(self):
+          new_data = {label_text: entry_var.get() for (label_text, _), entry_var in zip(self.cycle_data.items(), self.entry_vars)}
+          self.master.update_cycle_data(new_data)
+          self.destroy()
+
 class ProbeBuilder(BaseApp):
 
 
   def __init__(self, app, frame, data):
     super ().__init__ (app, frame, data)
+    # store colors for off and even index in treeview
+    self.colors = {'odd':'white', 'even': 'light gray'}
+    self.cycles = []
+    # setup the frame    
+    self.__setup__frames()
+    self.__setup_buttons()
+    self.__setup_treeview()
+    self.__setup_right_click_menu()
 
+    # Bind the right-click event to show the context menu
+    self.tree.bind("<Button-3>", self.__show_context_menu)
 
+  def __show_context_menu(self, event):
+        # Get the item that was right-clicked
+        item = self.tree.identify_row(event.y)
+        if item:
+            # Select the item
+            self.tree.selection_set(item)
+            # Display the context menu at the right-clicked position
+            self.context_menu.post(event.x_root, event.y_root)
+
+  def __edit_selected_item(self):
+        selected_item = self.tree.selection()
+        if selected_item:
+            item_index = self.tree.index(selected_item)
+            # edit data grabbing index from cycles
+            editor = CycleEditor(self.app.APP, self.cycles[item_index], item_index)
+
+  def __remove_selected_item(self):
+        selected_item = self.tree.selection()
+        if selected_item:
+            item_index = self.tree.index(selected_item)
+            self.cycles.remove(self.cycles[item_index])
+        self.__load_info()
+
+  def __setup_right_click_menu(self):
+    # Create the right-click context menu
+    self.context_menu = Menu(self.tree, tearoff=0)
+    self.context_menu.add_command(label="Edit", command=self.__edit_selected_item)
+    self.context_menu.add_command(label="Delete", command=self.__remove_selected_item)
+
+  def __setup__frames(self):
+    """
+    creates the frame to hold everything and keep it visually nice
+    """
+    self.button_frame = Frame(self.frame)
+    self.button_frame.pack(expand=False, padx=5, anchor=W)
+
+    
+
+  def __setup_buttons(self):
+    buttons = [{'text':'HEADER', 'command':self.__add_header},
+               {'text':'PPM', 'command':self.__add_ppm},
+               {'text':'SINGLE PT', 'command':self.__add_single_pt},
+               {'text':'BORE/BOSS', 'command':self.__add_bore_boss},
+               {'text':'WEB/POCKET', 'command':self.__add_web_pocket}]
+    for btn in buttons:
+      Button(self.button_frame, text=btn['text'], command=btn['command']).pack(pady=5)
+
+  def __setup_treeview(self):
+    # create treeview
+    self.tree = ttk.Treeview(self.frame, columns=("function"))
+    self.tree.heading('function', text="Function")
+    #self.tree.heading('edit', text='Edit')
+    self.tree.column("function", anchor="center")
+    #self.tree.column("edit", anchor="center")
+    self.tree["show"] = "headings"
+    self.tree.pack(padx=20, pady=20, fill="both", expand=False, anchor=E)
+
+  def __load_info(self):
+    self.tree.delete(*self.tree.get_children())
+    for cycle in self.cycles:
+      self.tree.insert("", "end", values=(cycle['name']))
+    self.__update_tags()
+
+  def __update_tags(self):
+    # Define the tag for even rows
+    self.tree.tag_configure("even", background=self.colors['even'])
+    self.tree.tag_configure("odd", background=self.colors['odd'])
+    # Apply the tag to the appropriate rows
+    for i in range(self.tree.get_children().__len__()):
+      if i % 2 == 0:
+        self.tree.item(self.tree.get_children()[i], tags="even")
+      else:
+        self.tree.item(self.tree.get_children()[i], tags="odd")
+
+  def update_cycle_data(self, new_data):
+        self.cycles.append(new_data)
+        print("Updated cycles:", self.cycles)
+
+  def __add_header(self):
+    # check if header is the 1st item, if not add it to the 1st item
+    item = {'name': Cycle.HEADER.value, 'feed':'60'}
+    for cycle in self.cycles:
+      if cycle['name'] == Cycle.HEADER.value:
+        return
+    self.cycles.insert(0, item)
+    self.__load_info()
+
+  def __add_ppm(self):
+    item = {'name': Cycle.PPM.value, 'feed':'60'}
+    self.cycles.append(item)
+    self.__load_info()
+
+  def __add_single_pt(self):
+    item = Cycle.SINGLE_PT.value
+    self.cycles.append(item)
+    self.__load_info()
+
+  def __add_bore_boss(self):
+    item = Cycle.BORE_BOSS.value
+    self.cycles.append(item)
+    self.__load_info()
+
+  def __add_web_pocket(self):
+    item = Cycle.WEB_POCKET.value
+    self.cycles.append(item)
+    self.__load_info() 
 
 class JsonFileManager:
     def __init__(self):
@@ -803,12 +959,8 @@ class MessageCenter(BaseApp):
     self.PORT = 587
 
     # email settings - junk email only for this, dont bother stealing my password 
-    self.EMAIL = {"email":"moc.kooltuo@noitamotuAtnatsissamac",
-                  "password":"4442drowssap",
-                  "recipients":["moc.kooltuo@noitamotuaretsehcniw"]} 
+    self.EMAIL = self.app.EMAIL_INFO
 
-
-    #Label (self.DATA_FRAME, text=message, font=(None, 12)).pack (pady=5)
     # add save button to save json data
     self.send_button = Button (self.frame, text="Send Message", font=(None, 14), command=self.__send_message)
     self.send_button.pack (pady=5)
@@ -859,10 +1011,9 @@ class MessageCenter(BaseApp):
           body_header = f"from {os.getlogin()} on {today.month}/{today.day}/{today.year}\n"
           # creates the email message
           email_message = f"From: {os.getlogin()}\nTo: {', '.join(recipients)}\nSubject: {subject}\n\n\nSender:\n{body_header}\nMessage:\n{body}"
-
-
-          
+        
           # Start the SMTP server and login
+          # email data is reversed to make it harder for the info to be seen
           with smtplib.SMTP(self.SERVER, self.PORT) as server:
               server.starttls()
               server.login(self.EMAIL['email'][::-1].title(), self.EMAIL['password'][::-1].title())
@@ -938,7 +1089,7 @@ class App:
     self.CONFIG_PATH = os.path.join(self.C_DRIVE, "config.ini")
     current_file_directory = os.path.dirname(os.path.abspath(__file__))
     self.CONFIG_PATH = os.path.join(current_file_directory, self.CONFIG_PATH)
-    self.EMAIL_PATH = os.path.join(current_file_directory, "data.ini")
+    
 
 
   def __setup_color_scheme(self):
@@ -950,14 +1101,19 @@ class App:
 
   def __load_emial_settings(self):
     # Check if config file exists
-    if os.path.isfile(self.CONFIG_PATH):
+    self.EMAIL_PATH = os.path.join(self.SOURCE_PATH, "data.ini")
+    if os.path.isfile(self.EMAIL_PATH):
       # File exists, load it
       CONFIG = configparser.ConfigParser()
       CONFIG.read(self.EMAIL_PATH)
-      #print(CONFIG.sections)
-      #email = CONFIG.get("data", "email")
-      #self.EMAIL_DATA = self.CONFIG.get("Data")
-      #print(email)
+      # loads email address from file
+      email = CONFIG.get("data", "email")
+      #loads password from file
+      password = CONFIG.get('data', 'password')
+      # loads recipients from file, splits the names at spaces, data needs to be a list
+      recipients = CONFIG.get('data', 'recipients').split(" ")
+      # save email info to a dictionary for the message center to access this
+      self.EMAIL_INFO = {'email':email, 'password': password, 'recipients':recipients}
     else:
       # Display the error message and close the app
       messagebox.showerror(f"Loading Failed", f"Failed to load emial config.\nClosing app.\n[ERROR]:{e}")
