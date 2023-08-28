@@ -3,7 +3,6 @@ from tkinter import filedialog
 from tkinter import messagebox
 import configparser
 from postEngine import PostEngine
-from callBlock import CallBlock
 
 
 class Configuration:
@@ -35,7 +34,7 @@ class CamAssistantApp(tk.Tk):
         self.dark_mode_var.set(True)
         self.__setup_ui()
         self.__configure_colors()
-        self.__open_file('test.nci')  # for debugging only, avoids opening file
+        self.__open_file("C:/Users/dwinc/Desktop/test.nci")  # for debugging only, avoids opening file
 
     def __setup_ui(self):
         # Create a menu bar
@@ -87,6 +86,7 @@ class CamAssistantApp(tk.Tk):
     def __open_file(self, file_path=None):
         if not file_path:
             file_path = filedialog.askopenfilename(filetypes=[("Cam File", "*.nci"), ("All Files", "*.*")])
+            print(file_path)
         if file_path:
             with open(file_path, 'r') as file:
                 # reads nci file
@@ -150,12 +150,20 @@ class CamAssistantApp(tk.Tk):
                 messagebox.showerror("Error", f"Error running the script: {e}")
 
 def test():
-    for member in CallBlock:
-        print(member.name, member.value.get("code"))
+    PE = PostEngine()
+    file_path = "C:/Users/dwinc/Desktop/test.nci"
+    with open (file_path, 'r') as file:
+        # reads nci file
+        content = file.read ()
+    PE.input_nci (content)
+    with open ("scripts//script.py", 'r') as file:
+        script = file.read()
+    post = PE.post(script)
+    PE.test()
 
 
 if __name__ == "__main__":
-    toTest = False
+    toTest = True
     if toTest:
         test()
     else:

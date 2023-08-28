@@ -1,9 +1,18 @@
 
 from callBlock import CallBlock
 
+
+class Program:
+
+    NAME = ""
+    NUMBER = None
+    TOOL_TABLE = []
+
+
 class PostEngine:
 
     def __init__(self):
+        self.program = Program()
         self.__raw_nci = []
         self.__current_code = []
 
@@ -20,6 +29,11 @@ class PostEngine:
                 block = self.__process_code(nci[i])
                 formatted_dict = {'code':nci[i], 'data':nci[i+1], 'block':block}
                 self.__raw_nci.append(formatted_dict)
+            # process tool change blocks
+            if block == CallBlock.TOOL_CHANGE and not self.program.NUMBER:
+                    number = nci[i+1].split(" ")
+                    self.program.NUMBER = number[0]
+                    print( self.program.NUMBER)
 
     def __process_code(self, code):
         """
@@ -45,6 +59,11 @@ class PostEngine:
     def get_raw_nci_list(self):
         return self.__raw_nci
 
+    def test(self):
+        for n in self.__raw_nci:
+            if n['block'] == CallBlock.START_OF_FILE_TOOL_CHANGE:
+                pass
+
     def post(self, script):
         formatted_code = []
         script_globals = {}
@@ -59,8 +78,10 @@ class PostEngine:
             # grab the data from the nci list
             data = nci['data']
             # if function exists in the script, run it with the data from the nci data
-            if function in script:
+            try:
                 content = script_globals[function](data)
+            except Exception as e:
+                pass
             if content != None:
                 formatted_code.append(content)
         return "\n".join(formatted_code)
