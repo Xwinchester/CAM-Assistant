@@ -10,6 +10,13 @@ import urllib.request
 import smtplib
 from datetime import datetime
 
+"""
+
+Revision History:
+    2023-08-31 - Drew Winchester - Working on Probe Builder, inside of main file. with label for testing only
+
+""" 
+
 
 class ColorScheme (Enum):
     DARK = {
@@ -226,7 +233,8 @@ class ThreadExpert (BaseApp):
             chamfer = float (chamfer_size)
             minor = float ((minor['high'] + minor['low']) / 2)
             major = float (major)
-            result['contour'] = round ((major - minor) + chamfer, rounding)
+            #result['contour'] = round ((major - minor) + chamfer, rounding)
+            result['contour'] = round (((major + chamfer*2) - minor)/2, rounding)
             result['plunge'] = round (major + (chamfer * 2), rounding)
         except:
             result['contour'] = "NULL"
@@ -734,12 +742,34 @@ class Axis(Enum):
 
 
 class Cycle:
-    HEADER = {'name': 'HEADER', 'comment': '', 'tool': '#640', 'wcs': 'G54'}
-    PPM = {'name': 'PPM', 'comment': '', 'position': Position (0, 0, 0), 'feed': ''}
+    """
+    Sets up the information to store in the cycle as well as the defaults to start out with
+    """
+
+
+    @classmethod
+    def HEADER(cls):
+        cycle = {'name': 'HEADER',
+                 'comment': '',
+                 'tool': '#640',
+                 'wcs': 'G54'}
+        return cycle
+
+    @classmethod
+    def PPM(cls):
+        cycle = {'name': 'PPM',
+                 'comment': '',
+                 'position': Position (0, 0, 0),
+                 'feed': ''}
+        return cycle
 
     @classmethod
     def SINGLE_PT(cls):
-        cycle = {'name': 'SINGLE PT', 'comment': '', 'axis':Axis.Z, 'clearance': Position(0, 0, 0), 'position': Position(0)}
+        cycle = {'name': 'SINGLE PT',
+                 'comment': '',
+                 'axis':Axis.Z,
+                 'clearance': Position(0, 0, 0),
+                 'position': Position(0)}
         return cycle
 
     BORE_BOSS = {'name': 'BORE / BOSS', 'comment': ''}
@@ -780,10 +810,12 @@ class CycleEditor (Toplevel):
         row = 1
 
         for label_text, entry_text in self.cycle_data.items():
-            print(label_text, entry_text)
+            print("__create_widgets: ",label_text,"=", entry_text)
             if isinstance(entry_text, Position):
                 self.__create_position_entries(entry_text, row)
                 row += 3
+            elif label_text == "name":
+                pass
             elif label_text == 'axis':
                 self.__create_axis_entry(label_text, entry_text, row)
                 row += 1
@@ -837,15 +869,19 @@ class CycleEditor (Toplevel):
 
     def __on_enter(self):
         new_data = {}
-
+        index = 0
         for name, var in zip(self.cycle_data.items(), self.entry_vars):
-            if isinstance(var, list):
+            print(name, var)
+            if index == 0:
+                new_data['name'] = name['name']
+            elif isinstance(var, list):
                 new_data['position'] = Position(var[0].get(), var[1].get(), var[2].get())
             elif name[0] == "axis":
                 new_data['axis'] = self.__get_selected_axis_index(var)
             else:
                 new_data[name[0]] = var.get()
-
+            index += 1
+        print(new_data)
         self.probe_builder.update_cycle_data(new_data, self.index)
         self.destroy()
 
@@ -858,7 +894,10 @@ class ProbeBuilder (BaseApp):
         # store colors for off and even index in treeview
         self.colors = {'odd': 'white', 'even': 'light gray'}
         self.cycles = []
+        # to show for testing only currently
+        Label(self.frame, text="****TESTING ONLY****", font=(None, 24)).pack()
         # setup the frame
+        self.__setup_post_button()
         self.__setup__frames ()
         self.__setup_buttons ()
         self.__setup_treeview ()
@@ -925,8 +964,13 @@ class ProbeBuilder (BaseApp):
         """
         creates the frame to hold everything and keep it visually organized
         """
-        self.button_frame = Frame (self.frame)
-        self.button_frame.pack (expand=False, padx=5, anchor=W)
+        # Create the button frame on the left
+        self.button_frame = Frame(self.frame, width=200)
+        self.button_frame.pack(padx=5, pady=5, side='left', fill='y')
+
+        # Create the treeview frame on the right
+        self.treeview_frame = Frame(self.frame)
+        self.treeview_frame.pack(padx=5, pady=5, side='right', fill='both', expand=True)
 
     def __setup_buttons(self):
         """
@@ -941,19 +985,26 @@ class ProbeBuilder (BaseApp):
         for btn in buttons:
             Button (self.button_frame, text=btn['text'], command=btn['command']).pack (pady=5)
 
+    def __setup_post_button(self):
+        """
+        sets up the post button and command for it
+        """
+        self.post_button = Button(self.frame, text="Post", command=self.__post, width=50)
+        self.post_button.pack(pady=10, side="bottom")
+
     def __setup_treeview(self):
         """
         sets up the entire treeview to visualize the probing cycles
         :return: null
         """
         # create treeview
-        self.tree = ttk.Treeview (self.frame, columns=("function"))
+        self.tree = ttk.Treeview (self.treeview_frame, columns=("function"))
         self.tree.heading ('function', text="Function")
         # self.tree.heading('edit', text='Edit')
         self.tree.column ("function", anchor="center")
         # self.tree.column("edit", anchor="center")
         self.tree["show"] = "headings"
-        self.tree.pack (padx=20, pady=20, fill="both", expand=False, anchor=E)
+        self.tree.pack ( fill="both", expand=False, anchor=E)
 
     def __update_treeview(self):
         """
@@ -982,6 +1033,14 @@ class ProbeBuilder (BaseApp):
             else:
                 self.tree.item (self.tree.get_children ()[i], tags="odd")
 
+    def __post(self, events=None):
+        """
+        TODO: need a way to select machine and run through a post to format the data in a way each machine will like
+        function when the probing cycle is ready, the user posts this code
+        """
+        for cycle in self.cycles:
+            print(cycle)
+
     def update_cycle_data(self, new_data, index):
         self.cycles[index] = new_data
         self.__update_treeview()
@@ -989,7 +1048,7 @@ class ProbeBuilder (BaseApp):
 
     def __add_header(self):
         # check if header is the 1st item, if not add it to the 1st item
-        item = Cycle.HEADER
+        item = Cycle.HEADER()
         for cycle in self.cycles:
             if cycle['name'] == Cycle.HEADER.value['name']:
                 return
@@ -997,7 +1056,7 @@ class ProbeBuilder (BaseApp):
         self.__update_treeview ()
 
     def __add_ppm(self):
-        item = Cycle.PPM
+        item = Cycle.PPM()
         self.cycles.append (item)
         self.__update_treeview ()
 
@@ -1306,6 +1365,11 @@ class App:
             self.__edit_json ()
 
     def reset_colors(self):
+        """
+        TODO: need to clean this funtion up
+        complicated function that recolors everything when the color scheme is changed
+        also when a new window is pressed this will be called as well
+        """
         self.APP.config (bg=self.COLOR_SCHEME.value['data_frame_background'])
         self.LOGO_FRAME.config (bg=self.COLOR_SCHEME.value["logo_frame_background"])
         self.BUTTON_FRAME.config (
@@ -1351,13 +1415,18 @@ class App:
                                    fg=self.COLOR_SCHEME.value['data_frame_font'])
 
     def __setup_button_frame(self):
-        # creats all the buttons on the left hand side, follow format to add new buttons
+        """
+        creats all the buttons on the left hand side, follow format to add new buttons
+        text : text that is shown on the button
+        command : the function that is called when the button is pressed
+        keep the color scheme button at the end of the list
+        """
         buttons = [{'text': Apps.HOME.value, 'command': self.__setup_home},
                    {'text': Apps.THREADEXPERT.value, 'command': self.__setup_thread_helper},
                    {'text': Apps.FORMULAWIZARD.value, 'command': self.__setup_formulas},
                    {'text': Apps.FOLDERFACTORY.value, 'command': self.__setup_folders},
                    {'text': Apps.CODEVAULT.value, 'command': self.__setup_code_database},
-                   #{'text': Apps.PROBEBUILDER.value, 'command': self.__setup_probe_builder},
+                   {'text': Apps.PROBEBUILDER.value, 'command': self.__setup_probe_builder},
                    {'text': Apps.MESSAGECENTER.value, 'command': self.__setup_message_center},
                    {'text': f"{self.COLOR_SCHEME.name.upper ()} MODE", 'command': self.__change_colors}
                    ]
@@ -1430,6 +1499,11 @@ class App:
         self.reset_colors ()
 
     def __change_colors(self):
+        """
+        command for when the colors button is pressed, this has all of the color schemes saved in a list
+        cycles through list and restarts the list when at the end
+        also changes the label of the color scheme button to current scheme
+        """
         for index in range (len (self.COLOR_SCHEMES)):
             if self.COLOR_SCHEMES[index] == self.COLOR_SCHEME:
                 new_index = index + 1
@@ -1466,8 +1540,8 @@ class App:
 
 class Apps (Enum):
     """
-  all of the sections of the apps name, come from here
-  """
+    all of the sections of the apps name, come from here
+    """
     HOME = "HOME"
     THREADEXPERT = "THREAD EXPERT"
     FORMULAWIZARD = "FORMULA WIZARD"
